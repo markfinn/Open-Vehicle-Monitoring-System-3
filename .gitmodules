@@ -7,3 +7,6 @@
 [submodule "vehicle/OVMS.V3/components/zip/libzip"]
 	path = vehicle/OVMS.V3/components/zip/libzip
 	url = https://github.com/openvehicles/libzip.git
+[submodule "esp-idf"]
+	path = esp-idf
+	url = https://github.com/openvehicles/esp-idf.git
