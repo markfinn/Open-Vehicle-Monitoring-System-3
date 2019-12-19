@@ -1,0 +1,2 @@
+export IDF_PATH=/home/mark/data/leaf-ovms/Open-Vehicle-Monitoring-System-3/esp-idf
+export PATH=$HOME/esp/xtensa-esp32-elf/bin:$PATH
