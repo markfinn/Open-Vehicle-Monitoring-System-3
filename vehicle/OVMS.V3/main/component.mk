@@ -6,7 +6,7 @@
 COMPONENT_ADD_INCLUDEDIRS := .
 COMPONENT_ADD_LDFLAGS = -Wl,--whole-archive -l$(COMPONENT_NAME) -Wl,--no-whole-archive -T main/ovms_boot.ld
 
-OVMS_VERSION := $(shell git describe --always --tags --dirty)
+OVMS_VERSION := MARKFINN_$(shell git describe --always --tags --dirty --exclude "*")_$(shell date --iso-8601=minutes)
 CPPFLAGS := -D OVMS_VERSION=\"$(OVMS_VERSION)\" $(CPPFLAGS)
 
 # update OVMS_VERSION dependency file:
