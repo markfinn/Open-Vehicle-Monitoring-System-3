@@ -1691,23 +1691,91 @@ static void script_compact(int verbosity, OvmsWriter* writer, OvmsCommand* cmd, 
 
 #endif // #ifdef CONFIG_OVMS_SC_JAVASCRIPT_DUKTAPE
 
+
+static void script_run(int verbosity, OvmsWriter* writer, OvmsCommand* cmd, int argc, const char* const* argv);
+
+
 static void script_ovms(bool print, int verbosity, OvmsWriter* writer,
-  const char* spath, FILE* sf, bool secure=false)
-  {
-  char *ext = rindex(spath, '.');
-  if ((ext != NULL)&&(strcmp(ext,".js")==0))
+                        FILE* sf, bool secure=false)
+{
+    //OVMS command script
+    char* cmdline = new char[_COMMAND_LINE_LEN];
+    BufferedShell* bs = new BufferedShell(print, verbosity);
+    if (secure) bs->SetSecure(true);
+    while(fgets(cmdline, _COMMAND_LINE_LEN, sf) != NULL )
     {
-    // Javascript script
+        bs->ProcessChars(cmdline, strlen(cmdline));
+    }
+    fclose(sf);
+    if (writer)
+    {
+        bs->Output(writer);
+    }
+    else
+    {
+        extram::string output;
+        bs->Dump(output);
+        ESP_LOGI(TAG, "%s", output.c_str());
+    }
+    delete bs;
+    delete [] cmdline;
+}
+
+static void script_exec(bool print, int verbosity, OvmsWriter* writer, const char* spath, FILE* sf, bool secure=false, int argc=0, const char* const* argv=NULL)
+  {
+    //use extension and shebang to figure out how to run a script..
+    //shebang overrides extension
+    //if both are missing default to OVMS command script
+  char *shebang = new char[_COMMAND_LINE_LEN];
+  char *args = (char *)"";
+  char *interpreter = NULL;
+  if (fgets(shebang, _COMMAND_LINE_LEN, sf) != NULL && shebang[0] == '#' && shebang[1] == '!') {
+      //use the shebang to find interpreter
+      args = shebang;
+      strsep(&args, " \t\n\r");
+      interpreter = shebang+2;
+  }
+  else
+  {
+      //no shebang, use extension and rewind the first line back into the file
+      fseek(sf,0,SEEK_SET);
+      interpreter = rindex(spath, '.') + 1;
+  }
+
+  if (interpreter == NULL || !*interpreter || !strcasecmp(interpreter, "ovms")) {
+      script_ovms(print, verbosity, writer, sf, secure);
+      // script_ovms() closes sf
+  }
+  else
+  {
+      //some other script. for now all are interpreted by duktape in one way or another
 #ifdef CONFIG_OVMS_SC_JAVASCRIPT_DUKTAPE
+    if (strcasecmp(interpreter, "js")) {//not straight js.  read in the interpreter instead
+        fclose(sf);
+        const char ** nextargs = new const char*[4 + argc];
+        nextargs[0] = interpreter;
+        nextargs[1] = spath;
+        nextargs[2] = args;
+        nextargs[3] = "--";
+        for (int i=0; i<argc; i++)
+            nextargs[4+i] = argv[i];
+        script_run(verbosity, writer, NULL, 4 + argc, nextargs);
+    }
+    else
+        {
+    long sstart = ftell(sf);
     fseek(sf,0,SEEK_END);
-    long slen = ftell(sf);
-    fseek(sf,0,SEEK_SET);
+    long slen = ftell(sf) - sstart;
+    fseek(sf,sstart,SEEK_SET);
     char *script = new char[slen+1];
-    memset(script,0,slen+1);
+    script[slen]=0;
     fread(script,1,slen,sf);
+    fclose(sf);
     MyScripts.DuktapeEvalNoResult(script, writer);
     delete [] script;
+    }
 #else // #ifdef CONFIG_OVMS_SC_JAVASCRIPT_DUKTAPE
+      fclose(sf);
     if (writer)
       {
       writer->puts("Error: No javascript engine available");
@@ -1718,32 +1786,12 @@ static void script_ovms(bool print, int verbosity, OvmsWriter* writer,
       }
 #endif // #ifdef CONFIG_OVMS_SC_JAVASCRIPT_DUKTAPE
     fclose(sf);
-    }
-  else
-    {
-    // Default: OVMS command script
-    BufferedShell* bs = new BufferedShell(print, verbosity);
-    if (secure) bs->SetSecure(true);
-    char* cmdline = new char[_COMMAND_LINE_LEN];
-    while(fgets(cmdline, _COMMAND_LINE_LEN, sf) != NULL )
-      {
-      bs->ProcessChars(cmdline, strlen(cmdline));
-      }
-    fclose(sf);
-    if (writer)
-      {
-      bs->Output(writer);
-      }
-    else
-      {
-      extram::string output;
-      bs->Dump(output);
-      ESP_LOGI(TAG, "%s", output.c_str());
-      }
-    delete bs;
-    delete [] cmdline;
-    }
   }
+
+  delete [] shebang;
+  }
+
+
 
 static void script_run(int verbosity, OvmsWriter* writer, OvmsCommand* cmd, int argc, const char* const* argv)
   {
@@ -1772,11 +1820,11 @@ static void script_run(int verbosity, OvmsWriter* writer, OvmsCommand* cmd, int 
     }
   if (sf == NULL)
     {
-    writer->puts("Error: Script not found");
+    writer->printf("Error: Script not found \"%s\"", argv[0]);
     return;
     }
-  script_ovms(verbosity != COMMAND_RESULT_MINIMAL, verbosity, writer,
-    path.c_str(), sf, writer->IsSecure());
+  script_exec(verbosity != COMMAND_RESULT_MINIMAL, verbosity, writer,
+    path.c_str(), sf, writer->IsSecure(), argc, argv);
   }
 
 void OvmsScripts::AllScripts(std::string path)
@@ -1807,8 +1855,8 @@ void OvmsScripts::AllScripts(std::string path)
     if (sf)
       {
       ESP_LOGI(TAG, "Running script %s", fpath.c_str());
-      script_ovms(false, COMMAND_RESULT_MINIMAL, NULL, fpath.c_str(), sf, true);
-      // script_ovms() closes sf
+      script_exec(false, COMMAND_RESULT_MINIMAL, NULL, fpath.c_str(), sf, true);
+      // script_exec() closes sf
       }
     }
   }
