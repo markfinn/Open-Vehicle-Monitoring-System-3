@@ -539,14 +539,14 @@ void OvmsVehicleNissanLeaf::IncomingFrameCan1(CAN_frame_t* p_frame)
         }
     }
       break;
-    case 0x1db:
+    case 0x1db://HVBATT -> EVC
     {
       memcpy(last1db, d, 8);
       if (MITM>0) {
         unsigned char new1db[8];
         memcpy(new1db, d, 8);
         new1db[1] = (new1db[1] & 0xe0) | 2;//f/s relay stop
-//        new1db[3] |= 0x10;//full charge
+        //new1db[3] |= 0x10;//tell the EVC we have a full charge lights up all three charge lights and may have some quirks with restarting charging.  not needed?
         new1db[6] = (new1db[6] + 1) % 4;
         new1db[7] = leafcrc(7, new1db);
         m_can1->WriteStandard(0x1db, 8, new1db);
@@ -1411,6 +1411,8 @@ void OvmsVehicleNissanLeaf::MITMDisableTimer() {
 OvmsVehicle::vehicle_command_t OvmsVehicleNissanLeaf::CommandStopCharge()
 {
   ESP_LOGI(TAG, "CommandStopCharge - MITM");
+  if (!MyConfig.GetParamValueBool("xnl", "enableChargeStop", false))
+    return Fail;
   if (!MITM) {
     MITM = 10;
     xTimerStart(MITMstop, 0);
