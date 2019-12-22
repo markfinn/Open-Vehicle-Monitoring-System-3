@@ -133,7 +133,29 @@ OvmsVehicleNissanLeaf::OvmsVehicleNissanLeaf()
 
   using std::placeholders::_1;
   using std::placeholders::_2;
-  }
+
+  memset(last1f2, 0, 8);
+  MyEvents.RegisterEvent(TAG,"mark.battkill2", std::bind(&OvmsVehicleNissanLeaf::MarkBattKill2, this, _1, _2));
+}
+
+unsigned char leaf1f2csum(unsigned int id, unsigned char * b) {
+  unsigned char csum = id+(id>>4)+(id>>8);
+  for (int i = 0; i < 7; i++)
+    csum += b[i] + (b[i]>>4);
+  csum += b[7]>>4;
+
+  return csum & 0xf;
+}
+
+void OvmsVehicleNissanLeaf::MarkBattKill2(std::string event, void* data)
+{//Charge_StatusTransitionReqest
+  ESP_LOGI(TAG, "mark bat kill2 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X", last1f2[0], last1f2[1], last1f2[2], last1f2[3], last1f2[4], last1f2[5], last1f2[6], last1f2[7]);
+  last1f2[2] = (last1f2[2] & 0x9f) | 0x60;
+  last1f2[6] = (last1f2[6]+1 )%4;
+  last1f2[7] = leaf1f2csum(7, last1f2);
+  ESP_LOGI(TAG, "mark bat kill22 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X", last1f2[0], last1f2[1], last1f2[2], last1f2[3], last1f2[4], last1f2[5], last1f2[6], last1f2[7]);
+  m_can1->WriteStandard(0x1f2, 8, last1f2);
+}
 
 OvmsVehicleNissanLeaf::~OvmsVehicleNissanLeaf()
   {
@@ -499,6 +521,9 @@ void OvmsVehicleNissanLeaf::IncomingFrameCan1(CAN_frame_t* p_frame)
         StandardMetrics.ms_v_mot_rpm->SetValue(nl_rpm/2);
         }
     }
+      break;
+    case 0x1f2:
+      memcpy(last1f2, d, 8);
       break;
     case 0x1db:
     {

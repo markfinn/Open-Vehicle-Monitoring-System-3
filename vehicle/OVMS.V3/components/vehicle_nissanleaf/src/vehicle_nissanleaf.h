@@ -125,6 +125,7 @@ class OvmsVehicleNissanLeaf : public OvmsVehicle
     void HandleEnergy();
     void HandleCharging();
     void HandleRange();
+    void MarkBattKill2(std::string event, void* data);
     int  calcMinutesRemaining(float target, float charge_power_w);
     void SendCommand(RemoteCommand);
     OvmsVehicle::vehicle_command_t RemoteCommandHandler(RemoteCommand command);
@@ -160,6 +161,7 @@ class OvmsVehicleNissanLeaf : public OvmsVehicle
     OvmsMetricFloat *m_soc_nominal;
     OvmsMetricInt *m_charge_count_qc;
     OvmsMetricInt *m_charge_count_l0l1l2;
+    unsigned char last1f2[8];
 
     float m_cum_energy_used_wh;				    	// Cumulated energy (in wh) used within 1 second ticker interval
     float m_cum_energy_recd_wh; 					// Cumulated energy (in wh) recovered  within 1 second ticker interval
