@@ -1436,6 +1436,23 @@ void OvmsVehicleNissanLeaf::MITM_0x1DB_DisableTimer() {
     }
 }
 
+OvmsVehicle::vehicle_command_t OvmsVehicleNissanLeaf::CommandSetChargeMode(vehicle_mode_t mode)
+{
+  if (mode > 1)
+    {
+    ESP_LOGW(TAG, "CommandSetChargeMode: unsupported mode %d, falling back to 0 (Standard / Range)", mode);
+    mode = Standard;
+    }
+  MyConfig.SetParamValueInt("xnl", "chargeautostop", mode == Storage ? 90 : 100);
+  return Success;
+}
+
+OvmsVehicle::vehicle_command_t OvmsVehicleNissanLeaf::CommandSetChargeCurrent(uint16_t limit)
+{
+  MyConfig.SetParamValueInt("xnl", "chargelevel", limit / 5);
+  return Success;
+}
+
 OvmsVehicle::vehicle_command_t OvmsVehicleNissanLeaf::CommandStopCharge()
   {
   ESP_LOGI(TAG, "CommandStopCharge - MITM");

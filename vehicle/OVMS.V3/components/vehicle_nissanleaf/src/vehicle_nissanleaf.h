@@ -132,6 +132,8 @@ class OvmsVehicleNissanLeaf : public OvmsVehicle
     OvmsVehicle::vehicle_command_t RemoteCommandHandler(RemoteCommand command);
     OvmsVehicle::vehicle_command_t CommandStartCharge();
     OvmsVehicle::vehicle_command_t CommandStopCharge();
+    OvmsVehicle::vehicle_command_t CommandSetChargeMode(vehicle_mode_t mode);
+    OvmsVehicle::vehicle_command_t CommandSetChargeCurrent(uint16_t limit);
 
 
     RemoteCommand nl_remote_command; // command to send, see RemoteCommandTimer()
