@@ -1,13 +1,19 @@
-//#!js
+/*
+/store/scripts/ovmsmain.js
+CHARGEHANDLER = require("ovmsbat90");
+CHARGEHANDLER.installChargeHandler();
+
+*/
 exports.installChargeHandler = function(){
         function ChargeHandler(){
 
                 this.handler = function handler(msg, data){
                         var soc = OvmsMetrics.AsFloat("v.b.soc");
                         var charging = OvmsMetrics.Value("v.c.charging").toUpperCase()==="YES";
-                        print("Event: "+msg+" soc: "+soc+" chging: "+charging+" thisstate: "+this.state+"\n");
+                        var limit = OvmsConfig.Get("xnl", "chargeautostop", 90);
+                        print("Event: "+msg+" soc: "+soc+" chging: "+charging+" limit: "+limit+"\n");
                         
-                        if (charging && soc >= 90)
+                        if (charging && soc >= limit)
                         {
                                 var now = OvmsMetrics.AsFloat("m.monotonic");
                                 if (now - this.laststop > 600)
@@ -72,7 +78,7 @@ exports.installChargeHandler = function(){
                 this.eventStop = PubSub.subscribe("vehicle.charge.stop",this.handler.bind(this));
                 this.event600 = PubSub.subscribe("ticker.600",this.handler.bind(this));
                 this.event60 = PubSub.subscribe("ticker.60",this.handler.bind(this));
-                this.state = 13;
+                this.state = 0;
                 this.laststop = 0;
                 }
 
@@ -83,23 +89,4 @@ exports.installChargeHandler = function(){
 }
 
 
-
-/*
-OVMS.OvmsConfig": {
-    "Delete": function Delete() { [native code] },
-    "Get": function Get() { [native code] },
-    "Instances": function Instances() { [native code] },
-    "Params": function 
-    
-    
-    
-    "OvmsMetrics": {
-    "AsFloat": function AsFloat() { [native code] },
-    "AsJSON": function AsJSON() { [native code] },
-    "Value": function Valu
-    
- 
-
-string = OvmsMetrics.Get(param,instance,default)
-*/
 
