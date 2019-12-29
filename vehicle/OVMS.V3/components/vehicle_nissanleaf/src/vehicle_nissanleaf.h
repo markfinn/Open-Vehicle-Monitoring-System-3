@@ -101,7 +101,7 @@ class OvmsVehicleNissanLeaf : public OvmsVehicle
     vehicle_command_t CommandUnlock(const char* pin);
     void RemoteCommandTimer();
     void CcDisableTimer();
-    void MITMDisableTimer();
+    void MITM_0x1DB_DisableTimer();
 
   // --------------------------------------------------------------------------
   // Webserver subsystem
@@ -144,7 +144,7 @@ class OvmsVehicleNissanLeaf : public OvmsVehicle
 
     TimerHandle_t m_remoteCommandTimer;
     TimerHandle_t m_ccDisableTimer;
-    TimerHandle_t MITMstop;
+    TimerHandle_t m_mITM_0x1DB_DisableTimer;
 
     metric_unit_t m_odometer_units = Other;
     OvmsMetricInt *m_gids;
@@ -165,8 +165,7 @@ class OvmsVehicleNissanLeaf : public OvmsVehicle
     OvmsMetricFloat *m_soc_nominal;
     OvmsMetricInt *m_charge_count_qc;
     OvmsMetricInt *m_charge_count_l0l1l2;
-    unsigned char last1db[8];
-    int MITM = 0;
+    int m_mITM_0x1DB_counter = 0;
 
     float m_cum_energy_used_wh;				    	// Cumulated energy (in wh) used within 1 second ticker interval
     float m_cum_energy_recd_wh; 					// Cumulated energy (in wh) recovered  within 1 second ticker interval
