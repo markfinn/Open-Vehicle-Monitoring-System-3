@@ -73,6 +73,7 @@ void OvmsVehicleNissanLeaf::WebCfgFeatures(PageEntry_t& p, PageContext_t& c)
   bool canwrite;
   bool socnewcar;
   bool sohnewcar;
+  bool enableChargeStop;
   std::string modelyear;
   std::string maxgids;
   std::string newcarah;
@@ -85,6 +86,7 @@ void OvmsVehicleNissanLeaf::WebCfgFeatures(PageEntry_t& p, PageContext_t& c)
     socnewcar = (c.getvar("socnewcar") == "yes");
     sohnewcar = (c.getvar("sohnewcar") == "yes");
     canwrite  = (c.getvar("canwrite") == "yes");
+    enableChargeStop = (c.getvar("enableChargeStop") == "yes");
 
     // check:
     if (!modelyear.empty()) {
@@ -101,6 +103,7 @@ void OvmsVehicleNissanLeaf::WebCfgFeatures(PageEntry_t& p, PageContext_t& c)
       MyConfig.SetParamValueBool("xnl", "soc.newcar", socnewcar);
       MyConfig.SetParamValueBool("xnl", "soh.newcar", sohnewcar);
       MyConfig.SetParamValueBool("xnl", "canwrite",   canwrite);
+      MyConfig.SetParamValueBool("xnl", "enableChargeStop",   enableChargeStop);
 
       c.head(200);
       c.alert("success", "<p class=\"lead\">Nissan Leaf feature configuration saved.</p>");
@@ -122,6 +125,7 @@ void OvmsVehicleNissanLeaf::WebCfgFeatures(PageEntry_t& p, PageContext_t& c)
     socnewcar = MyConfig.GetParamValueBool("xnl", "soc.newcar", false);
     sohnewcar = MyConfig.GetParamValueBool("xnl", "soh.newcar", false);
     canwrite  = MyConfig.GetParamValueBool("xnl", "canwrite", false);
+    enableChargeStop  = MyConfig.GetParamValueBool("xnl", "enableChargeStop", false);
 
     c.head(200);
   }
@@ -155,6 +159,8 @@ void OvmsVehicleNissanLeaf::WebCfgFeatures(PageEntry_t& p, PageContext_t& c)
   c.input("number", "Model year", "modelyear", modelyear.c_str(), "Default: " STR(DEFAULT_MODEL_YEAR),
     "<p>This determines the format of CAN write messages as it differs slightly between model years.</p>",
     "min=\"2011\" step=\"1\"", "");
+  c.input_checkbox("Enable experimental remote charging stop ability", "enableChargeStop", enableChargeStop,
+                   "<p>Probably not to be used until more beta testing is complete. See <a href=\"https://github.com/openvehicles/Open-Vehicle-Monitoring-System-3/issues/287\">the github issue</a></p>");
   c.fieldset_end();
 
   c.print("<hr>");

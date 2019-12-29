@@ -1417,6 +1417,8 @@ void OvmsVehicleNissanLeaf::MITM_0x1DB_DisableTimer() {
 OvmsVehicle::vehicle_command_t OvmsVehicleNissanLeaf::CommandStopCharge()
   {
   ESP_LOGI(TAG, "CommandStopCharge - MITM");
+  if (!MyConfig.GetParamValueBool("xnl", "enableChargeStop", false))
+    return Fail;
   //set ourselves up for sending 9 man-in-the-middle 0x1db packets with the failsafe bit set
   if (!m_mITM_0x1DB_counter)
     {
